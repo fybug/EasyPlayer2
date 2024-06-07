@@ -116,16 +116,14 @@ fun EasyPlayer(
                 AndroidView(
                     modifier = Modifier.fillMaxSize(),
                     factory = {
-                        val root = FrameLayout(it)
                         vm.surfaceView.apply {
                             kotlin.runCatching {
                                 (parent as? ViewGroup)?.removeView(this)
-                                root.addView(this, ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT))
+                                //root.addView(this, ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT))
                             }.onFailure {
                                 it.printStackTrace()
                             }
                         }
-                        root
                     }
                 )
             }
