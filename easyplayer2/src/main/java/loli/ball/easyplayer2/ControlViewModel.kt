@@ -5,6 +5,7 @@ import android.app.Activity
 import android.content.Context
 import android.content.pm.ActivityInfo
 import android.provider.Settings
+import android.util.Log
 import android.view.OrientationEventListener
 import androidx.annotation.UiThread
 import androidx.compose.runtime.Composable
@@ -26,6 +27,8 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import loli.ball.easyplayer2.surface.EasySurfaceView
+import loli.ball.easyplayer2.surface.EasySurfaceViewV2
+import loli.ball.easyplayer2.texture.EasyTextureView
 import loli.ball.easyplayer2.utils.loge
 
 /**
@@ -38,6 +41,9 @@ class ControlViewModel(
     val exoPlayer: ExoPlayer,
     val isPadMode: Boolean = false,
     val scene: String? = null,
+
+    // 自己管理 Surface 模式
+    val surfaceMode: Boolean = false,
 ) : ViewModel(), Player.Listener {
 
     companion object {
@@ -102,8 +108,21 @@ class ControlViewModel(
 
     private var lastVideoSize: VideoSize? = null
 
+
+    private val surfaceViewOld: EasySurfaceView by lazy {
+        EasySurfaceView(context)
+    }
+
+    private val surfaceView2: EasySurfaceViewV2 by lazy {
+        EasySurfaceViewV2(context)
+    }
+
     @SuppressLint("StaticFieldLeak")
-    val surfaceView = EasySurfaceView(context)
+    val surfaceView: EasySurfaceView = if (surfaceMode) {
+        surfaceView2
+    } else {
+        surfaceViewOld
+    }
 
     var fullScreenVertically = false
 
@@ -307,13 +326,35 @@ class ControlViewModel(
     }
 
     fun onLaunch() {
-        exoPlayer.setVideoSurfaceView(surfaceView)
+        bind()
         lastVideoSize?.let {
             surfaceView.setVideoSize(it.width, it.height)
         }
         exoPlayer.setPlaybackSpeed(1.0f)
         lastSpeed = 1.0f
         isLongPress = false
+    }
+
+    fun unbind() {
+        if (surfaceMode) {
+            surfaceView2.detachPlayer(exoPlayer)
+        } else {
+            exoPlayer.clearVideoSurfaceView(surfaceView)
+        }
+
+    }
+
+    fun bind() {
+        "bind".loge("ControlViewModel")
+        // exoPlayer.clearVideoSurface()
+        if (surfaceMode) {
+            surfaceView2.attachPlayer(exoPlayer)
+        } else {
+            exoPlayer.setVideoSurfaceView(surfaceView)
+        }
+        lastVideoSize?.let {
+            surfaceView.setVideoSize(it.width, it.height)
+        }
     }
 
     fun setSpeed(speed: Float) {
@@ -328,7 +369,11 @@ class ControlViewModel(
         } else {
             exoPlayer.stop()
         }
-        exoPlayer.clearVideoSurfaceView(surfaceView)
+        if (surfaceMode) {
+            surfaceView2.detachPlayer(exoPlayer)
+        } else {
+            exoPlayer.clearVideoSurfaceView(surfaceView)
+        }
     }
 
     private fun showControlWithHideDelay() {
@@ -432,6 +477,7 @@ class ControlViewModel(
         super.onVideoSizeChanged(videoSize)
         surfaceView.setVideoSize(videoSize.width, videoSize.height)
         fullScreenVertically = videoSize.width < videoSize.height
+        lastVideoSize = videoSize
     }
 
     private fun syncTimeIfNeed() {
@@ -475,6 +521,7 @@ class ControlViewModelFactory(
     private val exoPlayer: ExoPlayer,
     private val isPadMode: Boolean = false,
     private val scene: String? = null,
+    private val surfaceMode: Boolean = false,
 ) : ViewModelProvider.Factory {
 
     companion object {
@@ -482,14 +529,16 @@ class ControlViewModelFactory(
         fun viewModel(
             exoPlayer: ExoPlayer,
             isPadMode: Boolean = false,
-            scene: String? = null
+            scene: String? = null,
+            surfaceMode: Boolean = false,
         ): ControlViewModel {
             return viewModel<ControlViewModel>(
                 factory = ControlViewModelFactory(
                     LocalContext.current,
                     exoPlayer,
                     isPadMode = isPadMode,
-                    scene
+                    scene,
+                    surfaceMode
                 )
             )
         }
@@ -499,7 +548,7 @@ class ControlViewModelFactory(
     @SuppressWarnings("unchecked")
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(ControlViewModel::class.java))
-            return ControlViewModel(context, exoPlayer, isPadMode, scene) as T
+            return ControlViewModel(context, exoPlayer, isPadMode, scene, surfaceMode) as T
         throw RuntimeException("unknown class :" + modelClass.name)
     }
 

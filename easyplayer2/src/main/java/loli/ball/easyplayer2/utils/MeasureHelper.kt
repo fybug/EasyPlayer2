@@ -1,5 +1,6 @@
 package loli.ball.easyplayer2.utils
 
+import android.util.Log
 import android.view.View
 import kotlin.math.abs
 
@@ -52,6 +53,7 @@ class MeasureHelper {
         }
         var width = View.MeasureSpec.getSize(widthMeasureSpec)
         var height = View.MeasureSpec.getSize(heightMeasureSpec)
+        "$width $height".loge("MeasureHelper")
         if (mVideoHeight == 0 || mVideoWidth == 0) {
             return intArrayOf(width, height)
         }
