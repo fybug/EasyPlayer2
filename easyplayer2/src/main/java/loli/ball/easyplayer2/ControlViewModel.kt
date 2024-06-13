@@ -5,7 +5,6 @@ import android.app.Activity
 import android.content.Context
 import android.content.pm.ActivityInfo
 import android.provider.Settings
-import android.util.Log
 import android.view.OrientationEventListener
 import androidx.annotation.UiThread
 import androidx.compose.runtime.Composable
@@ -26,10 +25,11 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import loli.ball.easyplayer2.surface.SurfacePlayerRender
+import loli.ball.easyplayer2.render.EasyPlayerRender
 import loli.ball.easyplayer2.surface.EasySurfaceView
-import loli.ball.easyplayer2.surface.EasySurfaceViewV2
-import loli.ball.easyplayer2.texture.EasyTextureView
 import loli.ball.easyplayer2.utils.loge
+import java.lang.IllegalStateException
 
 /**
  * Created by HeYanLe on 2023/3/8 22:45.
@@ -41,9 +41,7 @@ class ControlViewModel(
     val exoPlayer: ExoPlayer,
     val isPadMode: Boolean = false,
     val scene: String? = null,
-
-    // 自己管理 Surface 模式
-    val surfaceMode: Boolean = false,
+    val render: EasyPlayerRender,
 ) : ViewModel(), Player.Listener {
 
     companion object {
@@ -108,23 +106,16 @@ class ControlViewModel(
 
     private var lastVideoSize: VideoSize? = null
 
-
-    private val surfaceViewOld: EasySurfaceView by lazy {
-        EasySurfaceView(context)
-    }
-
-    private val surfaceView2: EasySurfaceViewV2 by lazy {
-        EasySurfaceViewV2(context)
-    }
-
-    @SuppressLint("StaticFieldLeak")
-    val surfaceView: EasySurfaceView = if (surfaceMode) {
-        surfaceView2
-    } else {
-        surfaceViewOld
-    }
+    @Deprecated("use render.getViewOrNull")
+    val surfaceView: EasySurfaceView
+        get() = render.getViewOrNull() as? EasySurfaceView ?: throw IllegalStateException("use render.getViewOrNull")
 
     var fullScreenVertically = false
+
+    init {
+        // 先创建一下
+        render.getOrCreateView(context)
+    }
 
     fun onLockedChange(locked: Boolean) {
         viewModelScope.launch {
@@ -328,7 +319,7 @@ class ControlViewModel(
     fun onLaunch() {
         bind()
         lastVideoSize?.let {
-            surfaceView.setVideoSize(it.width, it.height)
+            render.setVideoSize(it.width, it.height)
         }
         exoPlayer.setPlaybackSpeed(1.0f)
         lastSpeed = 1.0f
@@ -336,24 +327,15 @@ class ControlViewModel(
     }
 
     fun unbind() {
-        if (surfaceMode) {
-            surfaceView2.detachPlayer(exoPlayer)
-        } else {
-            exoPlayer.clearVideoSurfaceView(surfaceView)
-        }
-
+        render.onDetachToPlayer(exoPlayer)
     }
 
     fun bind() {
         "bind".loge("ControlViewModel")
         // exoPlayer.clearVideoSurface()
-        if (surfaceMode) {
-            surfaceView2.attachPlayer(exoPlayer)
-        } else {
-            exoPlayer.setVideoSurfaceView(surfaceView)
-        }
+        render.onAttachToPlayer(exoPlayer)
         lastVideoSize?.let {
-            surfaceView.setVideoSize(it.width, it.height)
+            render.setVideoSize(it.width, it.height)
         }
     }
 
@@ -369,11 +351,7 @@ class ControlViewModel(
         } else {
             exoPlayer.stop()
         }
-        if (surfaceMode) {
-            surfaceView2.detachPlayer(exoPlayer)
-        } else {
-            exoPlayer.clearVideoSurfaceView(surfaceView)
-        }
+        render.onDetachToPlayer(exoPlayer)
     }
 
     private fun showControlWithHideDelay() {
@@ -423,7 +401,7 @@ class ControlViewModel(
 
     override fun onIsPlayingChanged(isPlaying: Boolean) {
         super.onIsPlayingChanged(isPlaying)
-        surfaceView.keepScreenOn = isPlaying
+        render.getViewOrNull()?.keepScreenOn = isPlaying
     }
 
     override fun onPlaybackStateChanged(playbackState: Int) {
@@ -475,7 +453,7 @@ class ControlViewModel(
 
     override fun onVideoSizeChanged(videoSize: VideoSize) {
         super.onVideoSizeChanged(videoSize)
-        surfaceView.setVideoSize(videoSize.width, videoSize.height)
+        render.setVideoSize(videoSize.width, videoSize.height)
         fullScreenVertically = videoSize.width < videoSize.height
         lastVideoSize = videoSize
     }
@@ -521,7 +499,7 @@ class ControlViewModelFactory(
     private val exoPlayer: ExoPlayer,
     private val isPadMode: Boolean = false,
     private val scene: String? = null,
-    private val surfaceMode: Boolean = false,
+    private val render: EasyPlayerRender = SurfacePlayerRender(),
 ) : ViewModelProvider.Factory {
 
     companion object {
@@ -530,7 +508,7 @@ class ControlViewModelFactory(
             exoPlayer: ExoPlayer,
             isPadMode: Boolean = false,
             scene: String? = null,
-            surfaceMode: Boolean = false,
+            render: EasyPlayerRender = SurfacePlayerRender(),
         ): ControlViewModel {
             return viewModel<ControlViewModel>(
                 factory = ControlViewModelFactory(
@@ -538,7 +516,7 @@ class ControlViewModelFactory(
                     exoPlayer,
                     isPadMode = isPadMode,
                     scene,
-                    surfaceMode
+                    render
                 )
             )
         }
@@ -548,7 +526,7 @@ class ControlViewModelFactory(
     @SuppressWarnings("unchecked")
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(ControlViewModel::class.java))
-            return ControlViewModel(context, exoPlayer, isPadMode, scene, surfaceMode) as T
+            return ControlViewModel(context, exoPlayer, isPadMode, scene, render) as T
         throw RuntimeException("unknown class :" + modelClass.name)
     }
 

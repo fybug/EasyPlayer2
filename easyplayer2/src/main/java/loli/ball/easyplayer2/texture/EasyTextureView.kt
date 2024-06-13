@@ -13,12 +13,9 @@ import loli.ball.easyplayer2.utils.MeasureHelper
 /**
  * Created by heyanlin on 2024/6/11.
  */
-class EasyTextureView : TextureView, TextureView.SurfaceTextureListener {
+class EasyTextureView : TextureView{
 
     private val measureHelper: MeasureHelper = MeasureHelper()
-    private var mSurface: Surface? = null
-    private var mSurfaceTexture: SurfaceTexture? = null
-    private var exoPlayer: ExoPlayer? = null
 
     fun setVideoSize(width: Int, height: Int) {
         if (width > 0 && height > 0) {
@@ -47,44 +44,16 @@ class EasyTextureView : TextureView, TextureView.SurfaceTextureListener {
             ViewGroup.LayoutParams.MATCH_PARENT,
             ViewGroup.LayoutParams.MATCH_PARENT
         )
-        surfaceTextureListener = this
     }
 
-    override fun onSurfaceTextureAvailable(surface: SurfaceTexture, width: Int, height: Int) {
-        mSurfaceTexture = surface
-        mSurface = Surface(surface)
-        exoPlayer?.setVideoSurface(mSurface)
-    }
 
-    override fun onSurfaceTextureSizeChanged(surface: SurfaceTexture, width: Int, height: Int) {
-        mSurfaceTexture = surface
-        mSurface = Surface(surface)
-        exoPlayer?.setVideoSurface(mSurface)
-    }
-
-    override fun onSurfaceTextureDestroyed(surface: SurfaceTexture): Boolean {
-        exoPlayer?.clearVideoSurface(mSurface)
-        return true
-    }
-
-    override fun onSurfaceTextureUpdated(surface: SurfaceTexture) {
-        mSurfaceTexture = surface
-        mSurface = Surface(surface)
-        exoPlayer?.setVideoSurface(mSurface)
-    }
 
     fun attachPlayer(player: ExoPlayer){
-        exoPlayer = player
-        if(mSurfaceTexture != null){
-            exoPlayer?.setVideoSurface(mSurface)
-        }
+        player.setVideoTextureView(this)
     }
 
     fun detachPlayer(player: ExoPlayer){
-        if (exoPlayer == player) {
-            exoPlayer?.clearVideoSurface(mSurface)
-            exoPlayer = null
-        }
+        player.clearVideoTextureView(this)
 
     }
 
