@@ -5,12 +5,17 @@ import android.graphics.PixelFormat
 import android.util.AttributeSet
 import android.view.SurfaceView
 import android.view.ViewGroup
+import androidx.media3.common.util.UnstableApi
+import androidx.media3.decoder.VideoDecoderOutputBuffer
+import androidx.media3.exoplayer.video.VideoDecoderOutputBufferRenderer
 import loli.ball.easyplayer2.utils.MeasureHelper
+import loli.ball.easyplayer2.utils.loge
 
 /**
  * Created by HeYanLe on 2023/3/9 15:21.
  * https://github.com/heyanLE
  */
+@UnstableApi
 open class EasySurfaceView : SurfaceView {
 
     protected val measureHelper: MeasureHelper = MeasureHelper()
@@ -35,6 +40,7 @@ open class EasySurfaceView : SurfaceView {
         val measuredSize: IntArray = measureHelper.doMeasure(widthMeasureSpec, heightMeasureSpec)
         setMeasuredDimension(measuredSize[0], measuredSize[1])
     }
+
 
     constructor(context: Context?) : super(context)
     constructor(context: Context?, attrs: AttributeSet?) : super(context, attrs)

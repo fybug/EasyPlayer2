@@ -1,6 +1,7 @@
 package loli.ball.easyplayer2.texture
 
 import android.content.Context
+import android.view.TextureView
 import android.view.View
 import androidx.media3.exoplayer.ExoPlayer
 import loli.ball.easyplayer2.render.EasyPlayerRender
@@ -10,9 +11,14 @@ import loli.ball.easyplayer2.render.EasyPlayerRender
  * https://github.com/heyanLE
  */
 class TexturePlayerRender: EasyPlayerRender {
+    private var surfaceTextureListener: TextureView.SurfaceTextureListener? = null
     private var textureView: EasyTextureView? = null
 
     override fun getViewOrNull(): View? {
+        return textureView
+    }
+
+    fun getTextureViewOrNull(): EasyTextureView? {
         return textureView
     }
 
@@ -21,6 +27,9 @@ class TexturePlayerRender: EasyPlayerRender {
         if (sur == null){
             val surfaceView = EasyTextureView(ctx)
             this.textureView = surfaceView
+            surfaceTextureListener?.let {
+                surfaceView.setExtSurfaceTextureListener(it)
+            }
             return surfaceView
         }
         return sur
@@ -46,5 +55,10 @@ class TexturePlayerRender: EasyPlayerRender {
 
     override fun setVideoRotation(degree: Int) {
         textureView?.setVideoRotation(degree)
+    }
+
+    fun setExtSurfaceTextureListener(listener: TextureView.SurfaceTextureListener){
+        textureView?.setExtSurfaceTextureListener(listener)
+        this.surfaceTextureListener = listener
     }
 }
