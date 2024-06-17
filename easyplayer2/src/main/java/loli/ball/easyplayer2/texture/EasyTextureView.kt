@@ -18,6 +18,7 @@ class EasyTextureView : TextureView {
 
     private val measureHelper: MeasureHelper = MeasureHelper()
 
+    // 因为 exoPlayer 需要接管该 Listener，这里直接加一个 hook
     private var mainSurfaceTextureListener: SurfaceTextureListener? = null
     private var extSurfaceTextureListener: SurfaceTextureListener? = null
     private val surfaceTextureListenerWrapper: SurfaceTextureListener =
