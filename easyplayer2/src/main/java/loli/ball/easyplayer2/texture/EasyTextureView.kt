@@ -18,6 +18,8 @@ class EasyTextureView : TextureView {
 
     private val measureHelper: MeasureHelper = MeasureHelper()
 
+    var onSizeChange: ((Int, Int) ->Unit)? = null
+
     private var mainSurfaceTextureListener: SurfaceTextureListener? = null
     private var extSurfaceTextureListener: SurfaceTextureListener? = null
     private val surfaceTextureListenerWrapper: SurfaceTextureListener =
@@ -71,6 +73,7 @@ class EasyTextureView : TextureView {
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
         val measuredSize: IntArray = measureHelper.doMeasure(widthMeasureSpec, heightMeasureSpec)
+        onSizeChange?.invoke(measuredSize[0], measuredSize[1])
         setMeasuredDimension(measuredSize[0], measuredSize[1])
     }
 
