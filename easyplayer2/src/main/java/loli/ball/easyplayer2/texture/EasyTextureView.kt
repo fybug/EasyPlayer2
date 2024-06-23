@@ -73,7 +73,6 @@ class EasyTextureView : TextureView {
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
         val measuredSize: IntArray = measureHelper.doMeasure(widthMeasureSpec, heightMeasureSpec)
-        onSizeChange?.invoke(measuredSize[0], measuredSize[1])
         setMeasuredDimension(measuredSize[0], measuredSize[1])
     }
 
