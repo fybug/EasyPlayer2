@@ -18,6 +18,7 @@ class MeasureHelper {
         const val SCREEN_SCALE_ORIGINAL = 4         // 原始大小
         const val SCREEN_SCALE_CENTER_CROP = 5      // 平铺，从中心裁切，保证占满屏幕
         const val SCREEN_SCALE_ADAPT = 6            // 保证长或宽与屏幕相等，比例不变
+        const val SCREEN_SCALE_FOR_HEIGHT = 7       // 以高度为准
     }
 
     private var mVideoWidth = 0
@@ -102,6 +103,10 @@ class MeasureHelper {
                 val scale = if (abs(wScale - 1) < abs(hScale - 1)) wScale else hScale
                 width = (scale * mVideoWidth).toInt()
                 height = (scale * mVideoHeight).toInt()
+            }
+            SCREEN_SCALE_FOR_HEIGHT -> {
+                height = heightMeasureSpec
+                width = height * mVideoWidth / mVideoHeight
             }
             else -> {
                 if (widthScaleGtHeightScale) {
