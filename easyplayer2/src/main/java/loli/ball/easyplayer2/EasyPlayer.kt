@@ -41,13 +41,16 @@ fun EasyPlayerScaffold(
 fun EasyPlayerScaffoldBase(
     vm: ControlViewModel,
     modifier: Modifier = Modifier,
+    needSync: Boolean = true,
     isPadMode: Boolean = false,
     contentWeight: Float = 1f,
     videoFloat: (@Composable (ControlViewModel) -> Unit)? = null,
     control: (@Composable (ControlViewModel) -> Unit)? = null,
     content: @Composable BoxScope.() -> Unit,
 ) {
-    EasyPlayerStateSync(vm)
+    if (needSync) {
+        EasyPlayerStateSync(vm)
+    }
     if (isPadMode) {
         Row(modifier) {
             EasyPlayer(
